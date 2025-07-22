@@ -1,0 +1,3852 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>목포시 통합도서관 홈페이지 개편 현황 관리</title>
+    
+    <!-- Supabase JavaScript Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #8d6e63 0%, #5d4037 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .login-header h2 {
+            color: #8d6e63;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        .login-header p {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .login-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 5px;
+        }
+
+        .login-tab {
+            flex: 1;
+            padding: 10px;
+            background: transparent;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .login-tab.active {
+            background: #8d6e63;
+            color: white;
+        }
+
+        .login-form .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .login-form label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .login-form input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .login-form input:focus {
+            outline: none;
+            border-color: #8d6e63;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #8d6e63, #a1887f);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(141, 110, 99, 0.3);
+        }
+
+        .login-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #8d6e63;
+        }
+
+        .login-info p {
+            margin: 5px 0;
+            font-size: 12px;
+            color: #666;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #f5f3f0 0%, #e8e2db 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+            border: 1px solid #d7ccc8;
+        }
+
+        .mokpo-header {
+            background: rgba(139, 115, 85, 0.95);
+            color: white;
+            padding: 15px 30px;
+            margin: -30px -30px 20px -30px;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .mokpo-header .logo {
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mokpo-header .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 14px;
+        }
+
+        .user-badge {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .user-badge.admin {
+            background: #28a745;
+            color: white;
+        }
+
+        .user-badge.viewer {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #8d6e63;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin: 0;
+        }
+
+        .status-indicator-inline {
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .readonly-notice {
+            background: linear-gradient(45deg, #17a2b8, #20c997);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 1px;
+            background: #e9ecef;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .menu-column {
+            background: white;
+            min-height: 400px;
+        }
+
+        .menu-header {
+            background: linear-gradient(45deg, #8d6e63, #a1887f);
+            color: white;
+            padding: 15px 12px;
+            font-weight: 700;
+            font-size: 16px;
+            text-align: center;
+            border-bottom: 1px solid #e9ecef;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .menu-header:hover {
+            background: linear-gradient(45deg, #6d4c41, #8d6e63);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .menu-header.active {
+            background: linear-gradient(45deg, #4caf50, #66bb6a);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        .menu-header::after {
+            content: "📂";
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+        }
+
+        .menu-header.active::after {
+            content: "📂✅";
+        }
+
+        .menu-item {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f8f9fa;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 13px;
+            color: #333;
+            text-align: center;
+            position: relative;
+        }
+
+        .menu-item:hover {
+            background: #f8f9fa;
+            color: #8d6e63;
+            font-weight: 600;
+            transform: translateX(3px);
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .menu-item.page-exists {
+            background: linear-gradient(45deg, rgba(141, 110, 99, 0.1), rgba(161, 136, 127, 0.1));
+            border-left: 3px solid #8d6e63;
+        }
+
+        .menu-item.page-completed {
+            background: linear-gradient(45deg, rgba(40, 167, 69, 0.1), rgba(40, 167, 69, 0.1));
+            border-left: 3px solid #28a745;
+        }
+
+        .menu-item.page-completed::after {
+            content: "✓";
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .menu-item.current-page {
+            background: linear-gradient(45deg, rgba(63, 81, 181, 0.15), rgba(63, 81, 181, 0.15));
+            border-left: 4px solid #3f51b5;
+            font-weight: 700;
+            color: #3f51b5;
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(63, 81, 181, 0.2);
+        }
+
+        .menu-item.current-page::before {
+            content: "👁️";
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+        }
+
+        .page-navigation {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+            color: #333;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            background: #8d6e63;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .nav-btn:disabled {
+            background: #e9ecef;
+            color: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .page-counter {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            flex-wrap: wrap;
+        }
+
+        .page-selector {
+            padding: 8px 12px;
+            border: 2px solid #8d6e63;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            background: white;
+            color: #8d6e63;
+            min-width: 140px;
+        }
+
+        .page-selector:disabled {
+            background: #f8f9fa;
+            color: #6c757d;
+            border-color: #dee2e6;
+            cursor: not-allowed;
+        }
+
+        .page-title {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(45deg, #8d6e63, #a1887f);
+            color: white;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .comparison-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .comparison-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            min-height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .comparison-panel:hover {
+            transform: translateY(-5px);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            flex-shrink: 0;
+        }
+
+        .before-header {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+        }
+
+        .after-header {
+            background: linear-gradient(45deg, #4ecdc4, #44bd32);
+            color: white;
+        }
+
+        .panel-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .image-btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .image-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+
+        .image-container {
+            margin-bottom: 15px;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            background: white;
+            min-height: 300px;
+            max-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            flex: 2;
+            overflow: hidden;
+        }
+
+        .image-placeholder {
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .uploaded-image {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            border-radius: 5px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            object-fit: contain;
+        }
+
+        .image-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: none;
+        }
+
+        .image-container:hover .image-controls {
+            display: block;
+        }
+
+        .image-controls button {
+            background: rgba(220, 53, 69, 0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+
+        .content-area {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            background: #f8f9fa;
+            position: relative;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-area textarea {
+            width: 100%;
+            height: 100%;
+            min-height: 150px;
+            border: none;
+            background: transparent;
+            resize: none;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.6;
+            flex: 1;
+        }
+
+        .content-area textarea:focus {
+            outline: none;
+        }
+
+        .content-area textarea:disabled {
+            background: #f8f9fa;
+            color: #6c757d;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #8d6e63, #a1887f);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(141, 110, 99, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #dee2e6;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #e9ecef;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .progress-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+
+        .progress-bar {
+            background: #e9ecef;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #8d6e63, #a1887f);
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .project-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .info-item {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .info-item strong {
+            display: block;
+            color: #8d6e63;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .info-item span {
+            color: #333;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .notes-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #fff3cd;
+            border-radius: 10px;
+            border-left: 5px solid #ffc107;
+        }
+
+        .notes-section h4 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+
+        .notes-section textarea {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #ffd700;
+            border-radius: 8px;
+            background: white;
+            min-height: 120px;
+            font-family: inherit;
+        }
+
+        .notes-section textarea:disabled {
+            background: #f8f9fa;
+            color: #6c757d;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        .modal-content.large {
+            max-width: 900px;
+            margin: 5% auto;
+            text-align: left;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .modal-title.save {
+            color: #28a745;
+        }
+
+        .modal-message {
+            color: #333;
+            font-size: 16px;
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .modal-btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 80px;
+        }
+
+        .modal-btn-ok {
+            background: #28a745;
+            color: white;
+        }
+
+        .modal-btn-ok:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .backup-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #e8f5e8;
+            border-radius: 15px;
+            border-left: 5px solid #28a745;
+        }
+
+        .backup-section h4 {
+            color: #155724;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .backup-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .backup-btn {
+            padding: 12px 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .backup-btn:hover:not(:disabled) {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .backup-btn.secondary {
+            background: #17a2b8;
+        }
+
+        .backup-btn.secondary:hover:not(:disabled) {
+            background: #138496;
+        }
+
+        .status-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            display: none;
+        }
+
+        .menu-editor {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .category-editor {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            background: white;
+        }
+
+        .category-header {
+            background: linear-gradient(45deg, #8d6e63, #a1887f);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .category-title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .category-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .small-btn {
+            padding: 5px 10px;
+            font-size: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .small-btn.edit {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .small-btn.delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .small-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .menu-items-list {
+            padding: 20px;
+        }
+
+        .menu-item-editor {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .menu-item-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .menu-item-editor .small-btn {
+            min-width: 60px;
+        }
+
+        .add-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 15px;
+            background: #e8f5e8;
+            border-radius: 8px;
+            border: 2px dashed #28a745;
+        }
+
+        .add-category-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #fff3cd;
+            border-radius: 10px;
+            border: 2px dashed #ffc107;
+        }
+
+        .editor-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+        }
+
+        @media (max-width: 1200px) {
+            .menu-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .comparison-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .menu-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .page-navigation {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .project-info {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .status-indicator-inline {
+                font-size: 11px;
+                padding: 8px 12px;
+            }
+            
+            /* 모바일에서 접속자 표시 줄바꿈 */
+            .header > div {
+                flex-direction: column;
+                gap: 10px;
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .menu-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 로그인 화면 -->
+    <div id="loginScreen" class="login-overlay" style="display: none;">
+        <div class="login-container">
+            <div class="login-header">
+                <h2>🏛️ 목포시 통합도서관</h2>
+                <p>홈페이지 개편 현황 관리 시스템</p>
+            </div>
+            
+            <div class="login-tabs">
+                <button class="login-tab active" onclick="switchTab('admin')">담당공무원</button>
+                <button class="login-tab" onclick="switchTab('viewer')">업체 담당자</button>
+            </div>
+            
+            <div class="login-form">
+                <div class="form-group">
+                    <label id="loginLabel">관리자 비밀번호</label>
+                    <input type="password" id="loginInput" placeholder="비밀번호를 입력하세요">
+                </div>
+                
+                <div class="form-group" style="text-align: left;">
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #666;">
+                        <input type="checkbox" id="rememberLogin" checked style="margin: 0;">
+                        로그인 상태 유지 (24시간)
+                    </label>
+                </div>
+                
+                <button class="login-btn" onclick="attemptLogin()">🔓 접속하기</button>
+                <div class="login-info">
+                    <p id="loginInfoText">💡 담당공무원은 모든 내용을 편집할 수 있습니다</p>
+                    <p>🔒 모든 데이터는 안전하게 저장됩니다</p>
+                    <p>🔐 로그인 상태 유지 시 새로고침해도 자동 로그인됩니다</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" id="mainContent" style="display: none;">
+        <div class="mokpo-header">
+            <div class="logo">
+                🏛️ 목포시통합도서관 MOKPO CITY LIBRARY
+            </div>
+            <div class="user-info">
+                <span class="user-badge" id="userBadge">관리자</span>
+                <span id="userName">담당공무원</span>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+        
+        <div class="header">
+            <h1>🏛️ 목포시 통합도서관 홈페이지 개편 현황 관리</h1>
+            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                <div class="status-indicator-inline">
+                    ☁️ 시스템 초기화 중...
+                </div>
+                <div class="status-indicator-inline" id="onlineUsersIndicator" style="background: linear-gradient(45deg, #17a2b8, #20c997);">
+                    👥 접속자 확인 중...
+                </div>
+                <button class="btn btn-secondary" onclick="console.log('Backup clicked!'); if(currentUserType === 'admin') { downloadBackup(); } else { alert('관리자만 사용 가능합니다.'); }" id="downloadBackupBtn" style="padding: 8px 15px; font-size: 12px;">
+                    📥 백업 다운로드
+                </button>
+            </div>
+        </div>
+
+        <div class="readonly-notice" id="readonlyNotice">
+            📖 현재 <strong>읽기 전용 모드</strong>입니다. 진행 상황을 확인할 수 있지만 편집은 할 수 없습니다.
+        </div>
+
+        <div style="margin-bottom: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h4 style="color: #8B7355; margin: 0; text-align: center; flex: 1;">📋 목포시통합도서관 주요 메뉴 구조</h4>
+                <button class="btn btn-primary" onclick="openMenuEditor()" id="menuEditBtn" style="display: none;">⚙️ 메뉴 편집</button>
+            </div>
+            
+            <div class="menu-grid" id="menuGrid">
+                <!-- 메뉴가 동적으로 생성됩니다 -->
+            </div>
+            
+            <div style="background: linear-gradient(45deg, #495057, #6c757d); color: white; padding: 15px; margin-top: 15px; border-radius: 8px; font-size: 14px; text-align: center;">
+                <strong>📌 개편 방향:</strong> 목포시통합도서관의 기존 메뉴 구조를 깔끔하게 정리하여 사용자가 쉽게 찾을 수 있도록 개편<br>
+                <strong>💡 사용법:</strong> 각 메뉴를 클릭하면 해당 페이지로 이동하고 개편 현황을 확인할 수 있습니다
+            </div>
+        </div>
+
+        <div class="page-navigation">
+            <button class="nav-btn" id="prevBtn" onclick="previousPage()">◀ 이전</button>
+            <div class="page-counter">
+                <span id="currentPageNum">1</span> / <span id="totalPageNum">6</span>
+                
+                <!-- 대메뉴 선택 -->
+                <select class="page-selector" id="categorySelector" onchange="onCategoryChange(this.value)">
+                    <option value="">📂 대메뉴 선택</option>
+                    <!-- 옵션이 동적으로 생성됩니다 -->
+                </select>
+                
+                <!-- 소메뉴 선택 -->
+                <select class="page-selector" id="pageSelector" onchange="goToPage(this.value)" disabled>
+                    <option value="">📄 소메뉴 선택</option>
+                    <!-- 옵션이 동적으로 생성됩니다 -->
+                </select>
+            </div>
+            <button class="nav-btn" id="nextBtn" onclick="nextPage()">다음 ▶</button>
+        </div>
+
+        <div class="page-title" id="pageTitle">
+            메인 페이지
+        </div>
+
+        <div class="comparison-container">
+            <div class="comparison-panel">
+                <div class="panel-header before-header">
+                    <h3>📋 개편 전 (현재 상태)</h3>
+                    <button class="image-btn" onclick="uploadBeforeImage()" id="beforeImageBtn">📷 이미지 업로드</button>
+                </div>
+                <div class="image-container" id="beforeImageContainer">
+                    <div class="image-placeholder">
+                        현재 화면 이미지를 업로드하세요
+                    </div>
+                    <div class="image-controls">
+                        <button onclick="removeBeforeImage()">×</button>
+                    </div>
+                </div>
+                <div class="content-area">
+                    <textarea id="beforeContent" placeholder="현재 페이지의 문제점과 개선이 필요한 부분을 작성하세요..."></textarea>
+                </div>
+            </div>
+
+            <div class="comparison-panel">
+                <div class="panel-header after-header">
+                    <h3>✅ 개편 후 (목표 상태)</h3>
+                    <button class="image-btn" onclick="uploadAfterImage()" id="afterImageBtn">📷 이미지 업로드</button>
+                </div>
+                <div class="image-container" id="afterImageContainer">
+                    <div class="image-placeholder">
+                        목표 화면 이미지를 업로드하세요
+                    </div>
+                    <div class="image-controls">
+                        <button onclick="removeAfterImage()">×</button>
+                    </div>
+                </div>
+                <div class="content-area">
+                    <textarea id="afterContent" placeholder="울주통합도서관을 참고한 개편 목표와 완료 사항을 작성하세요..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="savePage()" id="saveBtn">💾 현재 페이지 저장</button>
+        </div>
+
+        <div class="notes-section">
+            <h4>📝 업무 지시사항 및 메모</h4>
+            <textarea id="workNotes" placeholder="업체에 전달할 업무 지시사항이나 중요한 메모를 작성하세요...
+
+예시:
+- 3분기 완료 예정 항목: 프로그램 신청 페이지, 희망도서 신청 페이지
+- 4분기 우선 진행 항목: 전체 게시판 시스템 개편
+- 울주통합도서관 참고 포인트: 깔끔한 네비게이션, 직관적인 검색 UI
+- 메인 페이지 개편 완료 - 나머지 세부 페이지 개편 우선 진행 필요"></textarea>
+            <div style="text-align: center; margin-top: 15px;">
+                <button class="btn btn-primary" onclick="saveWorkNotes()" id="saveNotesBtn">💾 업무 지시사항 저장</button>
+            </div>
+        </div>
+
+        <div class="progress-section">
+            <h4>📈 전체 진행률</h4>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 16.7%"></div>
+            </div>
+            <p id="progressText">16.7% 완료 (1/6 페이지)</p>
+        </div>
+
+        <div class="project-info">
+            <div class="info-item">
+                <strong>현재 분기</strong>
+                <span>3분기 진행 중</span>
+            </div>
+            <div class="info-item">
+                <strong>벤치마킹 사이트</strong>
+                <span>울주통합도서관</span>
+            </div>
+            <div class="info-item">
+                <strong>전체 페이지</strong>
+                <span id="totalPages">6개</span>
+            </div>
+            <div class="info-item">
+                <strong>완료 페이지</strong>
+                <span id="completedPages">1개</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 저장 완료 모달 -->
+    <div id="saveModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title save">✅ 저장 완료</div>
+            <div class="modal-message" id="saveMessage">
+                저장이 완료되었습니다!
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-ok" onclick="closeSaveModal()">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 메뉴 편집 모달 -->
+    <div id="menuEditorModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-title" style="text-align: center; margin-bottom: 20px; color: #8d6e63;">
+                ⚙️ 메뉴 구조 편집
+            </div>
+            
+            <div class="menu-editor" id="menuEditor">
+                <!-- 메뉴 편집 내용이 동적으로 생성됩니다 -->
+            </div>
+            
+            <div class="add-category-section">
+                <h4 style="color: #856404; margin-bottom: 15px;">➕ 새 대메뉴 추가</h4>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="text" id="newCategoryName" placeholder="새 대메뉴 이름을 입력하세요" 
+                           style="flex: 1; padding: 10px; border: 1px solid #ffd700; border-radius: 5px;">
+                    <button class="btn btn-primary" onclick="addNewCategory()">추가</button>
+                </div>
+            </div>
+            
+            <div class="editor-buttons">
+                <button class="btn btn-primary" onclick="saveMenuStructure()">💾 저장</button>
+                <button class="btn btn-secondary" onclick="closeMenuEditor()">취소</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== SUPABASE 설정 ====================
+        // 🔧 Supabase 프로젝트 설정 (사용자가 변경해야 함)
+        // 
+        // 📝 설정 방법:
+        // 1. https://supabase.com 에서 새 프로젝트 생성
+        // 2. 프로젝트 대시보드에서 Settings > API 메뉴로 이동
+        // 3. 아래 값들을 복사하여 교체:
+        //    - Project URL → SUPABASE_URL
+        //    - anon public key → SUPABASE_ANON_KEY
+        // 4. SQL Editor에서 테이블 생성 (앱 실행 시 안내 표시됨)
+        // 5. 페이지 새로고침
+        //
+        // ⚠️ 주의: 실제 프로젝트에서는 RLS(Row Level Security) 설정 권장
+        //
+        const SUPABASE_URL = 'https://ifuixpcizqkyhubjsqmf.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmdWl4cGNpenFreWh1YmpzcW1mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxNDgyMzEsImV4cCI6MjA2ODcyNDIzMX0.iyPP4G2R8FsxXriYyxIVDGrS76K1Nt6p1kaaxF9nd6M';
+
+        // Supabase 클라이언트 초기화
+        let supabase = null;
+        let isSupabaseReady = false;
+
+        // Supabase 초기화 함수
+        function initializeSupabase() {
+            try {
+                if (SUPABASE_URL === 'YOUR_SUPABASE_URL_HERE' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY_HERE') {
+                    // Supabase 설정이 안된 경우 localStorage 사용
+                    isSupabaseReady = false;
+                    return false;
+                }
+                
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                isSupabaseReady = true;
+                
+                // 연결 테스트
+                testSupabaseConnection();
+                return true;
+            } catch (error) {
+                isSupabaseReady = false;
+                return false;
+            }
+        }
+
+        // Supabase 연결 테스트
+        async function testSupabaseConnection() {
+            try {
+                const { data, error } = await supabase.from('mokpo_projects').select('id').limit(1);
+                if (error && error.code === '42P01') {
+                    // 테이블이 없는 경우 생성 안내
+                    showSupabaseSetupModal();
+                }
+            } catch (error) {
+                // 연결 실패 시 localStorage로 폴백
+                isSupabaseReady = false;
+            }
+        }
+
+        // Supabase 설정 안내 모달
+        function showSupabaseSetupModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'block';
+            modal.style.zIndex = '9999';
+            
+            modal.innerHTML = `
+                <div class="modal-content large">
+                    <div class="modal-title" style="color: #4f46e5; margin-bottom: 20px; text-align: center;">
+                        ☁️ Supabase 데이터베이스 설정
+                    </div>
+                    <div style="margin-bottom: 20px; color: #666; line-height: 1.6;">
+                        <p><strong>🔧 Supabase에서 다음 SQL을 실행하여 테이블을 생성하세요:</strong></p>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <textarea readonly style="width: 100%; height: 300px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-family: monospace; font-size: 12px; background: #f8f9fa;">-- 목포시 도서관 프로젝트 테이블 생성
+CREATE TABLE mokpo_projects (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    project_name TEXT NOT NULL DEFAULT '목포시 통합도서관 홈페이지 개편',
+    pages JSONB NOT NULL DEFAULT '[]',
+    work_notes TEXT DEFAULT '',
+    menu_structure JSONB NOT NULL DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 실시간 접속자 관리 테이블
+CREATE TABLE user_sessions (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    session_id TEXT UNIQUE NOT NULL,
+    user_type TEXT NOT NULL,
+    user_name TEXT,
+    last_heartbeat TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- RLS (Row Level Security) 활성화
+ALTER TABLE mokpo_projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_sessions ENABLE ROW LEVEL SECURITY;
+
+-- 모든 사용자가 읽기/쓰기 가능하도록 정책 설정 (개발용)
+CREATE POLICY "Enable all access for mokpo_projects" ON mokpo_projects
+    FOR ALL USING (true) WITH CHECK (true);
+
+CREATE POLICY "Enable all access for user_sessions" ON user_sessions
+    FOR ALL USING (true) WITH CHECK (true);
+
+-- 오래된 세션 자동 정리 함수 (선택사항)
+CREATE OR REPLACE FUNCTION cleanup_old_sessions()
+RETURNS void AS $
+BEGIN
+    DELETE FROM user_sessions 
+    WHERE last_heartbeat < NOW() - INTERVAL '5 minutes';
+END;
+$ LANGUAGE plpgsql;</textarea>
+                    </div>
+                    <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107; margin-bottom: 20px;">
+                        <h4 style="color: #856404; margin-bottom: 10px;">📝 설정 방법</h4>
+                        <ol style="color: #856404; font-size: 14px; margin: 0; padding-left: 20px;">
+                            <li>Supabase 대시보드에서 SQL Editor로 이동</li>
+                            <li>위의 SQL 코드를 복사하여 실행</li>
+                            <li>소스코드에서 SUPABASE_URL과 SUPABASE_ANON_KEY 수정</li>
+                            <li>페이지 새로고침</li>
+                        </ol>
+                        <div style="margin-top: 15px; padding: 10px; background: #e8f5e8; border-radius: 5px;">
+                            <strong style="color: #155724;">🚀 새로운 기능:</strong>
+                            <ul style="margin: 5px 0 0 20px; color: #155724; font-size: 13px;">
+                                <li>📊 프로젝트 데이터 저장 (mokpo_projects 테이블)</li>
+                                <li>👥 실시간 접속자 수 표시 (user_sessions 테이블)</li>
+                                <li>⚡ 자동 세션 관리 및 정리</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div style="text-align: center;">
+                        <button class="btn btn-primary" onclick="closeSetupModal(); location.reload();">
+                            🔄 설정 완료 후 새로고침
+                        </button>
+                        <button class="btn btn-secondary" onclick="closeSetupModal();" style="margin-left: 10px;">
+                            💾 로컬 저장소 사용
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            window.closeSetupModal = () => {
+                modal.remove();
+            };
+        }
+
+        // ==================== 전역 변수 ====================
+        let currentUserType = null;
+        let currentPageIndex = 0;
+        let currentCategory = null; // 현재 선택된 대메뉴
+        let filteredPages = []; // 현재 카테고리의 페이지들
+        let workNotes = "";
+        let pages = []; // 빈 배열로 시작 - initializePages()에서 채워짐
+        
+        // 실시간 접속자 관리 변수
+        let currentSessionId = null;
+        let heartbeatInterval = null;
+        let onlineUsersCount = 0;
+        
+        let menuStructure = {
+            "자료검색": ["소장자료검색", "대출현황조회", "신간도서", "추천도서", "전자도서관"],
+            "신청·참여": ["프로그램신청", "희망도서신청", "지역서점바로대출", "시설이용신청", "자원봉사신청"],
+            "독서·문화마당": ["올해의책", "이달의행사", "영화상영안내", "동아리안내"],
+            "도서관이용": ["이용안내", "공지사항", "자주하는질문", "사서에게물어보세요", "도서관에바란다"],
+            "도서관소개": ["인사말", "도서관연혁", "시설현황", "층별안내", "찾아오시는길"],
+            "작은도서관": ["작은도서관현황", "작은도서관소개", "작은도서관공지사항", "비대면도서대출"]
+        };
+        function initializePages() {
+            // 현재 메뉴 구조를 기반으로 페이지 데이터 동기화
+            const allMenuItems = [];
+            
+            // 메뉴 구조에서 모든 소메뉴 수집
+            Object.keys(menuStructure).forEach(category => {
+                menuStructure[category].forEach(menuItem => {
+                    allMenuItems.push({
+                        menuName: menuItem,
+                        category: category
+                    });
+                });
+            });
+            
+            // 기존 메인 페이지 유지
+            const mainPage = pages.find(p => p.menuName === "메인페이지");
+            
+            // 새로운 페이지 배열 생성
+            const newPages = [];
+            
+            // 메인 페이지 추가
+            if (mainPage) {
+                newPages.push(mainPage);
+            } else {
+                newPages.push({
+                    title: "메인 페이지",
+                    category: "main",
+                    beforeContent: "기존 메인 페이지 문제점:\n- 구식 디자인과 레이아웃\n- 사용자 경험 부족\n- 모바일 반응형 미지원",
+                    afterContent: "목표 개편 사항:\n- 모던하고 깔끔한 디자인\n- 직관적인 네비게이션\n- 완전 반응형 웹 디자인\n- 사용자 친화적 인터페이스",
+                    beforeImage: null,
+                    afterImage: null,
+                    isCompleted: true,
+                    menuName: "메인페이지"
+                });
+            }
+            
+            // 메뉴 구조의 각 소메뉴에 대해 페이지 생성/업데이트
+            allMenuItems.forEach(item => {
+                const existingPage = pages.find(p => p.menuName === item.menuName);
+                
+                if (existingPage) {
+                    // 기존 페이지가 있으면 카테고리만 업데이트
+                    existingPage.category = item.category;
+                    newPages.push(existingPage);
+                } else {
+                    // 새 페이지 생성
+                    newPages.push({
+                        title: item.menuName,
+                        category: item.category,
+                        beforeContent: "",
+                        afterContent: "",
+                        beforeImage: null,
+                        afterImage: null,
+                        isCompleted: false,
+                        menuName: item.menuName
+                    });
+                }
+            });
+            
+            // 전역 pages 배열 업데이트
+            pages = newPages;
+        }
+
+        // 로그인 관련
+        const credentials = {
+            admin: 'mokpo2024!',
+            viewer: 'view2024'
+        };
+
+        function switchTab(type) {
+            const tabs = document.querySelectorAll('.login-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            const label = document.getElementById('loginLabel');
+            const info = document.getElementById('loginInfoText');
+            const input = document.getElementById('loginInput');
+
+            if (type === 'admin') {
+                label.textContent = '관리자 비밀번호';
+                info.textContent = '💡 담당공무원은 모든 내용을 편집할 수 있습니다';
+                input.placeholder = '관리자 비밀번호를 입력하세요';
+            } else {
+                label.textContent = '업체 접속 코드';
+                info.textContent = '💡 업체 담당자는 진행 상황을 확인할 수 있습니다';
+                input.placeholder = '업체 전용 접속 코드를 입력하세요';
+            }
+            
+            input.value = '';
+            input.focus();
+        }
+
+        async function attemptLogin() {
+            try {
+                const activeTab = document.querySelector('.login-tab.active');
+                
+                if (!activeTab) {
+                    alert('로그인 탭을 선택해주세요.');
+                    return;
+                }
+                
+                const userType = activeTab.textContent === '담당공무원' ? 'admin' : 'viewer';
+                
+                const passwordInput = document.getElementById('loginInput');
+                if (!passwordInput) {
+                    alert('비밀번호 입력창을 찾을 수 없습니다.');
+                    return;
+                }
+                
+                const password = passwordInput.value.trim();
+                
+                if (!password) {
+                    alert('비밀번호를 입력해주세요.');
+                    return;
+                }
+                
+                if (credentials[userType] === password) {
+                    // 상태 업데이트
+                    currentUserType = userType;
+                    
+                    // "로그인 상태 유지" 체크박스 확인
+                    const rememberLogin = document.getElementById('rememberLogin').checked;
+                    
+                    if (rememberLogin) {
+                        // 로그인 상태를 localStorage에 저장 (새로고침 시 유지용)
+                        localStorage.setItem('mokpo_login_state', JSON.stringify({
+                            userType: userType,
+                            loginTime: new Date().getTime(),
+                            expiresIn: 24 * 60 * 60 * 1000 // 24시간 후 만료
+                        }));
+                    }
+                    
+                    // 화면 전환
+                    const loginScreen = document.getElementById('loginScreen');
+                    const mainContent = document.getElementById('mainContent');
+                    
+                    if (loginScreen && mainContent) {
+                        loginScreen.style.display = 'none';
+                        mainContent.style.display = 'block';
+                    }
+                    
+                    // UI 업데이트 호출
+                    updateUserInterface();
+                    
+                    // 사용자 세션 시작 (실시간 접속자 관리)
+                    await startUserSession(userType);
+                    
+                    // 데이터 로드
+                    loadData();
+                    
+                    // 성공 메시지
+                    const loginMessage = rememberLogin ? 
+                        `✅ ${userType === 'admin' ? '관리자' : '업체 담당자'}로 로그인했습니다!\n🔐 로그인 상태가 24시간 동안 유지됩니다.` :
+                        `✅ ${userType === 'admin' ? '관리자' : '업체 담당자'}로 로그인했습니다!\n💡 브라우저를 닫으면 자동으로 로그아웃됩니다.`;
+                    
+                    showSaveModal(loginMessage);
+                    
+                } else {
+                    alert('❌ 비밀번호가 올바르지 않습니다.');
+                    passwordInput.value = '';
+                }
+                
+            } catch (error) {
+                alert('로그인 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        // 자동 로그인 체크 함수
+        async function checkAutoLogin() {
+            try {
+                const loginState = localStorage.getItem('mokpo_login_state');
+                if (!loginState) {
+                    return false; // 로그인 정보 없음
+                }
+                
+                const loginData = JSON.parse(loginState);
+                const currentTime = new Date().getTime();
+                
+                // 만료 시간 체크
+                if (currentTime - loginData.loginTime > loginData.expiresIn) {
+                    // 만료된 로그인 정보 삭제
+                    localStorage.removeItem('mokpo_login_state');
+                    return false;
+                }
+                
+                // 자동 로그인 수행
+                currentUserType = loginData.userType;
+                
+                // 화면 전환
+                const loginScreen = document.getElementById('loginScreen');
+                const mainContent = document.getElementById('mainContent');
+                
+                if (loginScreen && mainContent) {
+                    loginScreen.style.display = 'none';
+                    mainContent.style.display = 'block';
+                }
+                
+                // UI 업데이트
+                updateUserInterface();
+                
+                // 사용자 세션 시작 (실시간 접속자 관리)
+                await startUserSession(loginData.userType);
+                
+                // 데이터 로드
+                loadData();
+                
+                // 자동 로그인 알림 (5초 후 자동 닫힘)
+                showAutoLoginNotification(loginData.userType);
+                
+                return true;
+                
+            } catch (error) {
+                // 오류 발생 시 로그인 정보 삭제
+                localStorage.removeItem('mokpo_login_state');
+                return false;
+            }
+        }
+
+        // 자동 로그인 알림 표시
+        function showAutoLoginNotification(userType) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(45deg, #28a745, #20c997);
+                color: white;
+                padding: 15px 20px;
+                border-radius: 10px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 10000;
+                font-weight: 600;
+                font-size: 14px;
+                max-width: 300px;
+                animation: slideInRight 0.3s ease;
+            `;
+            
+            notification.innerHTML = `
+                🔐 자동 로그인 완료<br>
+                <small>${userType === 'admin' ? '관리자' : '업체 담당자'}로 접속되었습니다</small>
+            `;
+            
+            // 애니메이션 스타일 추가
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideInRight {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOutRight {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            document.body.appendChild(notification);
+            
+            // 5초 후 자동 제거
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 5000);
+        }
+
+        function logout() {
+            // 로그아웃 전용 커스텀 모달 생성
+            createLogoutConfirmModal();
+        }
+
+        function createLogoutConfirmModal() {
+            // 기존 모달이 있다면 제거
+            const existingModal = document.getElementById('logoutConfirmModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // 새 로그아웃 모달 생성
+            const modal = document.createElement('div');
+            modal.id = 'logoutConfirmModal';
+            modal.className = 'modal';
+            modal.style.display = 'block';
+            modal.style.zIndex = '9999';
+            
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-title" style="color: #ff9800; margin-bottom: 20px;">
+                        🚪 로그아웃 확인
+                    </div>
+                    <div class="modal-message" style="margin-bottom: 30px; white-space: pre-line;">
+                        정말 로그아웃하시겠습니까?
+
+⚠️ 진행 중인 작업이 저장되지 않을 수 있습니다.
+💾 현재 작업은 자동으로 저장됩니다.
+                    </div>
+                    <div class="modal-buttons">
+                        <button class="modal-btn" style="background: #ff9800; color: white;" onclick="confirmLogout()">
+                            🚪 로그아웃
+                        </button>
+                        <button class="modal-btn" style="background: #6c757d; color: white;" onclick="cancelLogout()">
+                            ✖️ 취소
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // 전역 함수로 등록
+            window.confirmLogout = () => {
+                modal.remove();
+                performLogout();
+            };
+            
+            window.cancelLogout = () => {
+                modal.remove();
+            };
+            
+            // 모달 외부 클릭 시 취소
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+
+        function performLogout() {
+            // 현재 작업 저장
+            if (currentUserType === 'admin') {
+                try {
+                    saveCurrentPage(false);
+                    if (workNotes) {
+                        saveData(); // 업무 메모 저장
+                    }
+                } catch (error) {
+                    // 저장 중 오류 무시
+                }
+            }
+            
+            // 상태 초기화
+            currentUserType = null;
+            currentCategory = null;
+            filteredPages = [];
+            currentPageIndex = 0;
+            
+            // UI 초기화
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('loginInput').value = '';
+            
+            // 로그인 탭 초기화
+            const tabs = document.querySelectorAll('.login-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            tabs[0].classList.add('active'); // 첫 번째 탭 활성화
+            
+            // 로그인 폼 초기화
+            const label = document.getElementById('loginLabel');
+            const info = document.getElementById('loginInfoText');
+            const input = document.getElementById('loginInput');
+            
+            label.textContent = '관리자 비밀번호';
+            info.textContent = '💡 담당공무원은 모든 내용을 편집할 수 있습니다';
+            input.placeholder = '비밀번호를 입력하세요';
+            
+            // 로그아웃 성공 메시지
+            setTimeout(() => {
+                showSaveModal('✅ 로그아웃되었습니다!\n작업 내용이 자동으로 저장되었습니다.\n\n다시 이용하시려면 로그인해주세요.');
+            }, 200);
+        }
+
+        function updateUserInterface() {
+            const isAdmin = currentUserType === 'admin';
+            const readonlyNotice = document.getElementById('readonlyNotice');
+            const userBadge = document.getElementById('userBadge');
+            const userName = document.getElementById('userName');
+
+            if (isAdmin) {
+                userBadge.textContent = '관리자';
+                userBadge.className = 'user-badge admin';
+                userName.textContent = '담당공무원';
+                readonlyNotice.style.display = 'none';
+            } else {
+                userBadge.textContent = '업체';
+                userBadge.className = 'user-badge viewer';
+                userName.textContent = '업체 담당자';
+                readonlyNotice.style.display = 'block';
+            }
+
+            const editableElements = ['beforeContent', 'afterContent', 'workNotes'];
+            editableElements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.disabled = !isAdmin;
+                }
+            });
+
+            const adminOnlyButtons = [
+                'saveBtn', 'addPageBtn', 'deleteBtn', 'saveNotesBtn',
+                'beforeImageBtn', 'afterImageBtn', 'uploadBtn', 'resetBtn', 'menuEditBtn'
+            ];
+            
+            adminOnlyButtons.forEach(id => {
+                const button = document.getElementById(id);
+                if (button) {
+                    button.disabled = !isAdmin;
+                    button.style.display = isAdmin ? '' : 'none';
+                }
+            });
+
+            const imageControls = document.querySelectorAll('.image-controls');
+            imageControls.forEach(control => {
+                control.style.display = isAdmin ? '' : 'none';
+            });
+        }
+
+        // ==================== 실시간 접속자 관리 ====================
+        
+        // 고유 세션 ID 생성
+        function generateSessionId() {
+            return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+        
+        // 세션 시작 (로그인 시)
+        async function startUserSession(userType) {
+            if (!isSupabaseReady || !supabase) return;
+            
+            try {
+                // 기존 세션이 있다면 정리
+                if (currentSessionId) {
+                    await endUserSession();
+                }
+                
+                // 새 세션 생성
+                currentSessionId = generateSessionId();
+                
+                const userName = userType === 'admin' ? '담당공무원' : '업체담당자';
+                
+                const { error } = await supabase
+                    .from('user_sessions')
+                    .insert([{
+                        session_id: currentSessionId,
+                        user_type: userType,
+                        user_name: userName,
+                        last_heartbeat: new Date().toISOString()
+                    }]);
+                
+                if (error) {
+                    throw error;
+                }
+                
+                // 하트비트 시작 (30초마다)
+                startHeartbeat();
+                
+                // 실시간 접속자 수 업데이트
+                updateOnlineUsersCount();
+                
+            } catch (error) {
+                // 세션 생성 실패해도 계속 진행
+            }
+        }
+        
+        // 하트비트 시작
+        function startHeartbeat() {
+            if (heartbeatInterval) {
+                clearInterval(heartbeatInterval);
+            }
+            
+            heartbeatInterval = setInterval(async () => {
+                if (currentSessionId && isSupabaseReady && supabase) {
+                    try {
+                        await supabase
+                            .from('user_sessions')
+                            .update({ 
+                                last_heartbeat: new Date().toISOString() 
+                            })
+                            .eq('session_id', currentSessionId);
+                        
+                        // 접속자 수 업데이트
+                        updateOnlineUsersCount();
+                        
+                    } catch (error) {
+                        // 하트비트 실패 시 무시
+                    }
+                }
+            }, 30000); // 30초마다
+        }
+        
+        // 세션 종료 (로그아웃 또는 페이지 종료 시)
+        async function endUserSession() {
+            if (!currentSessionId || !isSupabaseReady || !supabase) return;
+            
+            try {
+                await supabase
+                    .from('user_sessions')
+                    .delete()
+                    .eq('session_id', currentSessionId);
+                
+                currentSessionId = null;
+                
+                if (heartbeatInterval) {
+                    clearInterval(heartbeatInterval);
+                    heartbeatInterval = null;
+                }
+                
+                // 접속자 수 업데이트
+                setTimeout(updateOnlineUsersCount, 1000);
+                
+            } catch (error) {
+                // 세션 종료 실패해도 계속 진행
+            }
+        }
+        
+        // 실시간 접속자 수 업데이트
+        async function updateOnlineUsersCount() {
+            if (!isSupabaseReady || !supabase) {
+                updateOnlineUsersDisplay(0);
+                return;
+            }
+            
+            try {
+                // 5분 이내 활동한 사용자만 온라인으로 간주
+                const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+                
+                const { data, error } = await supabase
+                    .from('user_sessions')
+                    .select('*')
+                    .gte('last_heartbeat', fiveMinutesAgo);
+                
+                if (error) {
+                    throw error;
+                }
+                
+                onlineUsersCount = data ? data.length : 0;
+                updateOnlineUsersDisplay(onlineUsersCount);
+                
+            } catch (error) {
+                // 접속자 수 조회 실패 시 기본값
+                updateOnlineUsersDisplay(0);
+            }
+        }
+        
+        // 접속자 수 화면 표시 업데이트
+        function updateOnlineUsersDisplay(count) {
+            const onlineIndicator = document.getElementById('onlineUsersIndicator');
+            if (onlineIndicator) {
+                const userText = count === 1 ? '1명' : `${count}명`;
+                onlineIndicator.innerHTML = `
+                    <span style="display: flex; align-items: center; gap: 5px;">
+                        <span style="width: 8px; height: 8px; background: #28a745; border-radius: 50%; animation: pulse 2s infinite;"></span>
+                        👥 접속자 ${userText}
+                    </span>
+                `;
+                
+                // 애니메이션 스타일 추가 (한 번만)
+                if (!document.getElementById('pulseAnimation')) {
+                    const style = document.createElement('style');
+                    style.id = 'pulseAnimation';
+                    style.textContent = `
+                        @keyframes pulse {
+                            0% { opacity: 1; }
+                            50% { opacity: 0.5; }
+                            100% { opacity: 1; }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+            }
+        }
+        
+        // 오래된 세션 정리 (선택적 호출)
+        async function cleanupOldSessions() {
+            if (!isSupabaseReady || !supabase) return;
+            
+            try {
+                const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+                
+                await supabase
+                    .from('user_sessions')
+                    .delete()
+                    .lt('last_heartbeat', fiveMinutesAgo);
+                
+            } catch (error) {
+                // 정리 실패해도 계속 진행
+            }
+        }
+
+        // ==================== 데이터 저장/로드 (Supabase + localStorage 하이브리드) ====================
+        
+        async function saveData() {
+            const data = {
+                pages: pages,
+                workNotes: workNotes,
+                menuStructure: menuStructure,
+                lastUpdated: new Date().toISOString(),
+                version: '1.0'
+            };
+
+            // Supabase 저장 시도
+            if (isSupabaseReady && supabase) {
+                try {
+                    // 기존 데이터 확인
+                    const { data: existingData, error: selectError } = await supabase
+                        .from('mokpo_projects')
+                        .select('id')
+                        .limit(1);
+
+                    if (selectError && selectError.code !== '42P01') {
+                        throw selectError;
+                    }
+
+                    const projectData = {
+                        project_name: '목포시 통합도서관 홈페이지 개편',
+                        pages: JSON.stringify(data.pages),
+                        work_notes: data.workNotes,
+                        menu_structure: JSON.stringify(data.menuStructure),
+                        updated_at: new Date().toISOString()
+                    };
+
+                    let result;
+                    if (existingData && existingData.length > 0) {
+                        // 업데이트
+                        result = await supabase
+                            .from('mokpo_projects')
+                            .update(projectData)
+                            .eq('id', existingData[0].id);
+                    } else {
+                        // 새로 생성
+                        result = await supabase
+                            .from('mokpo_projects')
+                            .insert([projectData]);
+                    }
+
+                    if (result.error) {
+                        throw result.error;
+                    }
+
+                    // Supabase 저장 성공 시 localStorage에도 백업
+                    localStorage.setItem('mokpo_library_data', JSON.stringify(data));
+                    
+                    // 상태 표시 업데이트
+                    updateConnectionStatus('☁️ 클라우드 저장 완료');
+                    return true;
+
+                } catch (error) {
+                    // Supabase 실패 시 localStorage로 폴백
+                    localStorage.setItem('mokpo_library_data', JSON.stringify(data));
+                    updateConnectionStatus('💾 로컬 저장 (클라우드 연결 실패)');
+                    return true;
+                }
+            } else {
+                // Supabase 미설정 시 localStorage 사용
+                try {
+                    localStorage.setItem('mokpo_library_data', JSON.stringify(data));
+                    updateConnectionStatus('💾 로컬 저장');
+                    return true;
+                } catch (error) {
+                    return false;
+                }
+            }
+        }
+
+        async function loadData() {
+            // Supabase에서 로드 시도
+            if (isSupabaseReady && supabase) {
+                try {
+                    const { data: supabaseData, error } = await supabase
+                        .from('mokpo_projects')
+                        .select('*')
+                        .order('updated_at', { ascending: false })
+                        .limit(1);
+
+                    if (!error && supabaseData && supabaseData.length > 0) {
+                        const projectData = supabaseData[0];
+                        
+                        // Supabase 데이터 파싱
+                        if (projectData.menu_structure) {
+                            menuStructure = JSON.parse(projectData.menu_structure);
+                        }
+                        if (projectData.pages) {
+                            pages = JSON.parse(projectData.pages);
+                        }
+                        if (projectData.work_notes) {
+                            workNotes = projectData.work_notes;
+                            document.getElementById('workNotes').value = workNotes;
+                        }
+
+                        // localStorage에도 백업
+                        const backupData = {
+                            pages: pages,
+                            workNotes: workNotes,
+                            menuStructure: menuStructure,
+                            lastUpdated: projectData.updated_at,
+                            version: '1.0'
+                        };
+                        localStorage.setItem('mokpo_library_data', JSON.stringify(backupData));
+                        
+                        updateConnectionStatus('☁️ 클라우드 데이터 로드 완료');
+                        
+                        // 페이지 데이터 동기화 및 UI 업데이트
+                        initializePages();
+                        updateAllDisplays();
+                        renderMenuGrid();
+                        return;
+                    }
+                } catch (error) {
+                    // Supabase 실패 시 localStorage로 폴백
+                }
+            }
+
+            // localStorage에서 로드 (폴백 또는 기본)
+            try {
+                const savedData = localStorage.getItem('mokpo_library_data');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    if (data.menuStructure) {
+                        menuStructure = data.menuStructure;
+                    }
+                    if (data.pages) {
+                        pages = data.pages;
+                    }
+                    if (data.workNotes) {
+                        workNotes = data.workNotes;
+                        document.getElementById('workNotes').value = workNotes;
+                    }
+                }
+                updateConnectionStatus('💾 로컬 데이터 로드 완료');
+            } catch (error) {
+                updateConnectionStatus('⚠️ 데이터 로드 실패');
+            }
+            
+            // 페이지 데이터를 현재 메뉴 구조와 동기화
+            initializePages();
+            updateAllDisplays();
+            renderMenuGrid();
+        }
+
+        // 연결 상태 표시 업데이트
+        function updateConnectionStatus(message) {
+            const statusElement = document.querySelector('.status-indicator-inline');
+            if (statusElement) {
+                statusElement.textContent = message;
+                
+                // 색상 변경
+                if (message.includes('클라우드')) {
+                    statusElement.style.background = 'linear-gradient(45deg, #4f46e5, #7c3aed)';
+                } else if (message.includes('로컬')) {
+                    statusElement.style.background = 'linear-gradient(45deg, #059669, #0d9488)';
+                } else if (message.includes('실패')) {
+                    statusElement.style.background = 'linear-gradient(45deg, #dc2626, #b91c1c)';
+                }
+            }
+        }
+
+        function renderMenuGrid() {
+            const menuGrid = document.getElementById('menuGrid');
+            menuGrid.innerHTML = '';
+            
+            Object.keys(menuStructure).forEach(category => {
+                const column = document.createElement('div');
+                column.className = 'menu-column';
+                
+                const header = document.createElement('div');
+                header.className = 'menu-header';
+                header.textContent = category;
+                header.style.cursor = 'pointer';
+                
+                // 현재 선택된 카테고리 표시
+                if (currentCategory === category) {
+                    header.classList.add('active');
+                }
+                
+                header.addEventListener('click', function() {
+                    handleCategoryClick(category);
+                });
+                column.appendChild(header);
+                
+                menuStructure[category].forEach(menuItem => {
+                    const item = document.createElement('div');
+                    item.className = 'menu-item';
+                    item.setAttribute('data-page', menuItem);
+                    item.textContent = menuItem;
+                    item.addEventListener('click', function() {
+                        handleMenuClick(menuItem, category);
+                    });
+                    column.appendChild(item);
+                });
+                
+                menuGrid.appendChild(column);
+            });
+            
+            updateMenuItemStyles();
+        }
+
+        function handleCategoryClick(categoryName) {
+            currentCategory = categoryName;
+            
+            // 해당 카테고리의 페이지들 필터링
+            filteredPages = pages.filter(page => {
+                return menuStructure[categoryName].includes(page.menuName);
+            });
+            
+            if (filteredPages.length > 0) {
+                // 첫 번째 페이지로 이동
+                currentPageIndex = 0;
+                loadFilteredPage(currentPageIndex);
+                updatePageNavigation();
+                
+                // 메뉴 제목 부분으로 스크롤
+                setTimeout(() => {
+                    const pageTitle = document.getElementById('pageTitle');
+                    pageTitle.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start' 
+                    });
+                }, 300);
+                
+                showSaveModal(`📂 ${categoryName} 카테고리가 선택되었습니다!\n${filteredPages.length}개의 페이지가 있습니다.`);
+            } else {
+                // 페이지가 없는 경우
+                currentPageIndex = 0;
+                document.getElementById('pageTitle').textContent = `${categoryName} > 페이지 없음`;
+                document.getElementById('beforeContent').value = '';
+                document.getElementById('afterContent').value = '';
+                
+                // 이미지 컨테이너 초기화
+                loadImages(null, null);
+                
+                updatePageNavigation();
+                showSaveModal(`📂 ${categoryName} 카테고리가 선택되었습니다.\n아직 페이지가 없습니다. 소메뉴를 클릭하여 새 페이지를 추가하세요.`);
+            }
+            
+            // 메뉴 그리드 업데이트 (선택된 카테고리 강조)
+            renderMenuGrid();
+        }
+
+        async function handleMenuClick(menuName, categoryName = null) {
+            // 카테고리가 지정되지 않은 경우 찾기
+            if (!categoryName) {
+                for (const [cat, items] of Object.entries(menuStructure)) {
+                    if (items.includes(menuName)) {
+                        categoryName = cat;
+                        break;
+                    }
+                }
+            }
+            
+            // 카테고리 설정
+            currentCategory = categoryName;
+            filteredPages = pages.filter(page => {
+                return menuStructure[categoryName].includes(page.menuName);
+            });
+            
+            // 해당 페이지 찾기
+            const pageIndex = filteredPages.findIndex(p => p.menuName === menuName);
+            
+            if (pageIndex !== -1) {
+                currentPageIndex = pageIndex;
+                loadFilteredPage(currentPageIndex);
+                updatePageNavigation();
+                
+                setTimeout(() => {
+                    const pageTitle = document.getElementById('pageTitle');
+                    pageTitle.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start' 
+                    });
+                }, 300);
+                
+            } else if (currentUserType === 'admin') {
+                if (confirm(`'${menuName}' 페이지를 새로 추가하시겠습니까?`)) {
+                    const newPage = {
+                        title: menuName,
+                        category: categoryName,
+                        beforeContent: '',
+                        afterContent: '',
+                        beforeImage: null,
+                        afterImage: null,
+                        isCompleted: false,
+                        menuName: menuName
+                    };
+                    
+                    pages.push(newPage);
+                    
+                    // 필터된 페이지 목록 다시 생성
+                    filteredPages = pages.filter(page => {
+                        return menuStructure[categoryName].includes(page.menuName);
+                    });
+                    
+                    currentPageIndex = filteredPages.length - 1;
+                    updateAllDisplays();
+                    await saveData();
+                    
+                    loadFilteredPage(currentPageIndex);
+                    updatePageNavigation();
+                    
+                    setTimeout(() => {
+                        const pageTitle = document.getElementById('pageTitle');
+                        pageTitle.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'start' 
+                        });
+                    }, 300);
+                }
+            }
+        }
+
+        function openMenuEditor() {
+            if (currentUserType !== 'admin') return;
+            
+            const modal = document.getElementById('menuEditorModal');
+            const editor = document.getElementById('menuEditor');
+            
+            editor.innerHTML = '';
+            
+            Object.keys(menuStructure).forEach(category => {
+                const categoryDiv = createCategoryEditor(category, menuStructure[category]);
+                editor.appendChild(categoryDiv);
+            });
+            
+            modal.style.display = 'block';
+        }
+
+        function createCategoryEditor(categoryName, menuItems) {
+            const categoryDiv = document.createElement('div');
+            categoryDiv.className = 'category-editor';
+            categoryDiv.setAttribute('data-category-name', categoryName); // 안전한 데이터 저장
+            
+            const header = document.createElement('div');
+            header.className = 'category-header';
+            header.innerHTML = `
+                <div class="category-title">${categoryName}</div>
+                <div class="category-controls">
+                    <button class="small-btn edit" onclick="editCategoryByElement(this)">✏️ 수정</button>
+                    <button class="small-btn delete" onclick="deleteCategoryByElement(this)">🗑️ 삭제</button>
+                </div>
+            `;
+            categoryDiv.appendChild(header);
+            
+            const itemsList = document.createElement('div');
+            itemsList.className = 'menu-items-list';
+            
+            menuItems.forEach((item, index) => {
+                const itemEditor = createMenuItemEditor(categoryName, item, index);
+                itemsList.appendChild(itemEditor);
+            });
+            
+            const safeId = categoryName.replace(/[^a-zA-Z0-9가-힣]/g, '_');
+            const addSection = document.createElement('div');
+            addSection.className = 'add-menu-item';
+            addSection.innerHTML = `
+                <input type="text" placeholder="새 소메뉴 이름" class="menu-item-input" 
+                       id="newItem_${safeId}">
+                <button class="small-btn" style="background: #28a745; color: white;" 
+                        onclick="addMenuItemByElement(this)">➕ 추가</button>
+            `;
+            addSection.setAttribute('data-category-name', categoryName);
+            itemsList.appendChild(addSection);
+            
+            categoryDiv.appendChild(itemsList);
+            return categoryDiv;
+        }
+
+        function editCategoryByElement(button) {
+            const categoryEditor = button.closest('.category-editor');
+            const oldName = categoryEditor.getAttribute('data-category-name');
+            
+            console.log('Editing category:', oldName);
+            
+            const newName = prompt('새 대메뉴 이름을 입력하세요:', oldName);
+            if (newName && newName.trim() && newName !== oldName) {
+                const trimmedName = newName.trim();
+                if (menuStructure[trimmedName]) {
+                    alert('이미 존재하는 대메뉴 이름입니다.');
+                    return;
+                }
+                
+                console.log('Changing category name from', oldName, 'to', trimmedName);
+                
+                // 메뉴 구조 업데이트
+                menuStructure[trimmedName] = menuStructure[oldName];
+                delete menuStructure[oldName];
+                
+                // 페이지 정보도 업데이트
+                pages.forEach(page => {
+                    if (page.category === oldName) {
+                        page.category = trimmedName;
+                    }
+                });
+                
+                console.log('Category renamed successfully');
+                saveData();
+                openMenuEditor(); // 편집기 새로고침
+            }
+        }
+
+        function deleteCategoryByElement(button) {
+            const categoryEditor = button.closest('.category-editor');
+            const categoryName = categoryEditor.getAttribute('data-category-name');
+            
+            console.log('Attempting to delete category:', categoryName);
+            
+            if (Object.keys(menuStructure).length <= 1) {
+                alert('최소 1개의 대메뉴는 필요합니다.');
+                return;
+            }
+            
+            // 커스텀 확인 모달 생성
+            createCustomConfirmModal(
+                `대메뉴 삭제 확인`,
+                `정말 '${categoryName}' 대메뉴를 삭제하시겠습니까?\n\n⚠️ 이 대메뉴에 속한 모든 소메뉴와 관련 페이지도 함께 삭제됩니다.\n⚠️ 이 작업은 되돌릴 수 없습니다.`,
+                () => {
+                    console.log('User confirmed category deletion');
+                    performCategoryDeletion(categoryName);
+                },
+                () => {
+                    console.log('User cancelled category deletion');
+                }
+            );
+        }
+
+        function performCategoryDeletion(categoryName) {
+            console.log('Performing category deletion:', categoryName);
+            
+            // 관련 페이지들 삭제
+            const menuItems = menuStructure[categoryName];
+            if (menuItems) {
+                menuItems.forEach(menuItem => {
+                    const pageIndex = pages.findIndex(p => p.menuName === menuItem);
+                    if (pageIndex !== -1) {
+                        console.log('Deleting page:', pages[pageIndex].title);
+                        pages.splice(pageIndex, 1);
+                    }
+                });
+            }
+            
+            // 메뉴 구조에서 삭제
+            delete menuStructure[categoryName];
+            console.log('Category deleted from menu structure');
+            
+            // 현재 페이지 인덱스 조정
+            if (currentPageIndex >= pages.length) {
+                currentPageIndex = Math.max(0, pages.length - 1);
+            }
+            
+            // 현재 선택된 카테고리가 삭제된 경우 초기화
+            if (currentCategory === categoryName) {
+                currentCategory = null;
+                filteredPages = [];
+            }
+            
+            saveData();
+            openMenuEditor(); // 편집기 새로고침
+            showSaveModal(`✅ '${categoryName}' 대메뉴가 삭제되었습니다.\n관련 페이지들도 함께 삭제되었습니다.`);
+        }
+
+        function addMenuItemByElement(button) {
+            const addSection = button.closest('.add-menu-item');
+            const categoryName = addSection.getAttribute('data-category-name');
+            const input = addSection.querySelector('.menu-item-input');
+            const itemName = input.value.trim();
+            
+            console.log('Adding menu item to category:', categoryName, 'item:', itemName);
+            
+            if (!itemName) {
+                alert('소메뉴 이름을 입력해주세요.');
+                return;
+            }
+            
+            const allMenuItems = Object.values(menuStructure).flat();
+            if (allMenuItems.includes(itemName)) {
+                alert('이미 존재하는 소메뉴 이름입니다.');
+                return;
+            }
+            
+            menuStructure[categoryName].push(itemName);
+            
+            // 새 소메뉴에 대한 페이지 자동 생성
+            pages.push({
+                title: itemName,
+                category: categoryName,
+                beforeContent: "",
+                afterContent: "",
+                beforeImage: null,
+                afterImage: null,
+                isCompleted: false,
+                menuName: itemName
+            });
+            
+            input.value = '';
+            console.log('Menu item added successfully');
+            openMenuEditor();
+        }
+
+        function createMenuItemEditor(categoryName, itemName, index) {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'menu-item-editor';
+            
+            // 메뉴 이름으로 식별하도록 변경
+            itemDiv.setAttribute('data-category', categoryName);
+            itemDiv.setAttribute('data-item-name', itemName);
+            
+            itemDiv.innerHTML = `
+                <input type="text" value="${itemName}" class="menu-item-input" 
+                       onchange="updateMenuItemByName(this, '${categoryName}', '${itemName}')">
+                <button class="small-btn edit" onclick="moveMenuItemUpByName(this)">⬆️</button>
+                <button class="small-btn edit" onclick="moveMenuItemDownByName(this)">⬇️</button>
+                <button class="small-btn delete" onclick="deleteMenuItemByName(this)">🗑️</button>
+            `;
+            return itemDiv;
+        }
+
+        function deleteMenuItemByName(button) {
+            const itemEditor = button.closest('.menu-item-editor');
+            const categoryName = itemEditor.getAttribute('data-category');
+            const itemName = itemEditor.getAttribute('data-item-name');
+            
+            if (!menuStructure[categoryName]) {
+                alert('카테고리를 찾을 수 없습니다: ' + categoryName);
+                return;
+            }
+            
+            // 배열이 아닌 경우 배열로 변환
+            if (!Array.isArray(menuStructure[categoryName])) {
+                menuStructure[categoryName] = Object.values(menuStructure[categoryName]);
+            }
+            
+            if (menuStructure[categoryName].length <= 1) {
+                alert('각 대메뉴에는 최소 1개의 소메뉴가 필요합니다.');
+                return;
+            }
+            
+            const index = menuStructure[categoryName].findIndex(item => item === itemName);
+            
+            if (index === -1) {
+                alert('소메뉴를 찾을 수 없습니다: ' + itemName);
+                return;
+            }
+            
+            // 커스텀 확인 모달 생성 (confirm 대신)
+            createCustomConfirmModal(
+                `소메뉴 삭제 확인`,
+                `'${itemName}' 소메뉴를 삭제하시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없습니다.\n⚠️ 관련된 페이지도 함께 삭제됩니다.`,
+                () => {
+                    performDeletion(categoryName, itemName, index);
+                },
+                () => {
+                    // 취소 시 아무것도 하지 않음
+                }
+            );
+        }
+
+        function createCustomConfirmModal(title, message, onConfirm, onCancel) {
+            // 기존 모달이 있다면 제거
+            const existingModal = document.getElementById('customConfirmModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // 새 모달 생성
+            const modal = document.createElement('div');
+            modal.id = 'customConfirmModal';
+            modal.className = 'modal';
+            modal.style.display = 'block';
+            modal.style.zIndex = '9999';
+            
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-title" style="color: #dc3545; margin-bottom: 20px;">
+                        🗑️ ${title}
+                    </div>
+                    <div class="modal-message" style="margin-bottom: 30px; white-space: pre-line;">
+                        ${message}
+                    </div>
+                    <div class="modal-buttons">
+                        <button class="modal-btn" style="background: #dc3545; color: white;" onclick="confirmCustomModal()">
+                            🗑️ 삭제하기
+                        </button>
+                        <button class="modal-btn" style="background: #6c757d; color: white;" onclick="cancelCustomModal()">
+                            ✖️ 취소
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // 전역 함수로 등록
+            window.confirmCustomModal = () => {
+                modal.remove();
+                onConfirm();
+            };
+            
+            window.cancelCustomModal = () => {
+                modal.remove();
+                onCancel();
+            };
+            
+            // 모달 외부 클릭 시 취소
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                    onCancel();
+                }
+            });
+        }
+
+        function performDeletion(categoryName, itemName, index) {
+            // 관련 페이지 삭제
+            const pageIndex = pages.findIndex(p => p.menuName === itemName);
+            if (pageIndex !== -1) {
+                pages.splice(pageIndex, 1);
+                if (currentPageIndex >= pages.length) {
+                    currentPageIndex = Math.max(0, pages.length - 1);
+                }
+            }
+            
+            // 메뉴 항목 삭제
+            menuStructure[categoryName].splice(index, 1);
+            
+            // 데이터 저장
+            saveData();
+            
+            // 페이지 데이터 재동기화
+            initializePages();
+            
+            // 화면 업데이트
+            renderMenuGrid();
+            updateAllDisplays();
+            
+            // 메뉴 편집기 새로고침
+            setTimeout(() => {
+                openMenuEditor();
+            }, 100);
+            
+            // 성공 메시지
+            showSaveModal(`✅ '${itemName}' 소메뉴가 삭제되었습니다.\n페이지 데이터도 자동으로 동기화되었습니다.`);
+        }
+
+        function moveMenuItemUpByName(button) {
+            const itemEditor = button.closest('.menu-item-editor');
+            const categoryName = itemEditor.getAttribute('data-category');
+            const itemName = itemEditor.getAttribute('data-item-name');
+            
+            // 배열 확인 및 변환
+            if (!Array.isArray(menuStructure[categoryName])) {
+                menuStructure[categoryName] = Object.values(menuStructure[categoryName]);
+            }
+            
+            const items = menuStructure[categoryName];
+            const index = items.findIndex(item => item === itemName);
+            
+            if (index <= 0) return;
+            
+            [items[index], items[index - 1]] = [items[index - 1], items[index]];
+            saveData();
+            openMenuEditor();
+        }
+
+        function moveMenuItemDownByName(button) {
+            const itemEditor = button.closest('.menu-item-editor');
+            const categoryName = itemEditor.getAttribute('data-category');
+            const itemName = itemEditor.getAttribute('data-item-name');
+            
+            // 배열 확인 및 변환
+            if (!Array.isArray(menuStructure[categoryName])) {
+                menuStructure[categoryName] = Object.values(menuStructure[categoryName]);
+            }
+            
+            const items = menuStructure[categoryName];
+            const index = items.findIndex(item => item === itemName);
+            
+            if (index === -1 || index === items.length - 1) return;
+            
+            [items[index], items[index + 1]] = [items[index + 1], items[index]];
+            saveData();
+            openMenuEditor();
+        }
+
+        async function updateMenuItemByName(input, categoryName, originalName) {
+            const trimmedValue = input.value.trim();
+            if (!trimmedValue) {
+                alert('소메뉴 이름은 비어있을 수 없습니다.');
+                openMenuEditor();
+                return;
+            }
+            
+            // 배열 확인 및 변환
+            if (!Array.isArray(menuStructure[categoryName])) {
+                menuStructure[categoryName] = Object.values(menuStructure[categoryName]);
+            }
+            
+            const allMenuItems = Object.values(menuStructure).flat();
+            const otherItems = allMenuItems.filter(item => item !== originalName);
+            
+            if (otherItems.includes(trimmedValue)) {
+                alert('이미 존재하는 소메뉴 이름입니다.');
+                openMenuEditor();
+                return;
+            }
+            
+            // 메뉴 구조에서 업데이트
+            const index = menuStructure[categoryName].findIndex(item => item === originalName);
+            if (index !== -1) {
+                menuStructure[categoryName][index] = trimmedValue;
+            }
+            
+            // 페이지 정보 업데이트
+            const page = pages.find(p => p.menuName === originalName);
+            if (page) {
+                page.menuName = trimmedValue;
+                page.title = trimmedValue;
+            }
+            
+            await saveData();
+        }
+
+        function editCategoryName(oldName) {
+            const newName = prompt('새 대메뉴 이름을 입력하세요:', oldName);
+            if (newName && newName.trim() && newName !== oldName) {
+                const trimmedName = newName.trim();
+                if (menuStructure[trimmedName]) {
+                    alert('이미 존재하는 대메뉴 이름입니다.');
+                    return;
+                }
+                
+                menuStructure[trimmedName] = menuStructure[oldName];
+                delete menuStructure[oldName];
+                
+                pages.forEach(page => {
+                    if (page.category === oldName) {
+                        page.category = trimmedName;
+                    }
+                });
+                
+                openMenuEditor();
+            }
+        }
+
+        function deleteCategory(categoryName) {
+            if (Object.keys(menuStructure).length <= 1) {
+                alert('최소 1개의 대메뉴는 필요합니다.');
+                return;
+            }
+            
+            if (confirm(`정말 '${categoryName}' 대메뉴를 삭제하시겠습니까?`)) {
+                const menuItems = menuStructure[categoryName];
+                menuItems.forEach(menuItem => {
+                    const pageIndex = pages.findIndex(p => p.menuName === menuItem);
+                    if (pageIndex !== -1) pages.splice(pageIndex, 1);
+                });
+                
+                delete menuStructure[categoryName];
+                
+                if (currentPageIndex >= pages.length) {
+                    currentPageIndex = Math.max(0, pages.length - 1);
+                }
+                
+                openMenuEditor();
+            }
+        }
+
+        function addMenuItem(categoryName) {
+            const safeId = categoryName.replace(/[^a-zA-Z0-9가-힣]/g, '_');
+            const inputId = `newItem_${safeId}`;
+            const input = document.getElementById(inputId);
+            const itemName = input.value.trim();
+            
+            if (!itemName) {
+                alert('소메뉴 이름을 입력해주세요.');
+                return;
+            }
+            
+            const allMenuItems = Object.values(menuStructure).flat();
+            if (allMenuItems.includes(itemName)) {
+                alert('이미 존재하는 소메뉴 이름입니다.');
+                return;
+            }
+            
+            menuStructure[categoryName].push(itemName);
+            input.value = '';
+            
+            // 새 소메뉴에 대한 페이지 자동 생성
+            pages.push({
+                title: itemName,
+                category: categoryName,
+                beforeContent: "",
+                afterContent: "",
+                beforeImage: null,
+                afterImage: null,
+                isCompleted: false,
+                menuName: itemName
+            });
+            
+            openMenuEditor();
+        }
+
+        function updateMenuItem(categoryName, index, newValue) {
+            const trimmedValue = newValue.trim();
+            if (!trimmedValue) {
+                alert('소메뉴 이름은 비어있을 수 없습니다.');
+                openMenuEditor();
+                return;
+            }
+            
+            const allMenuItems = Object.values(menuStructure).flat();
+            const oldValue = menuStructure[categoryName][index];
+            const otherItems = allMenuItems.filter(item => item !== oldValue);
+            
+            if (otherItems.includes(trimmedValue)) {
+                alert('이미 존재하는 소메뉴 이름입니다.');
+                openMenuEditor();
+                return;
+            }
+            
+            const page = pages.find(p => p.menuName === oldValue);
+            if (page) {
+                page.menuName = trimmedValue;
+                page.title = trimmedValue;
+            }
+            
+            menuStructure[categoryName][index] = trimmedValue;
+        }
+
+        function moveMenuItemUp(categoryName, index) {
+            if (index === 0) return;
+            
+            const items = menuStructure[categoryName];
+            [items[index], items[index - 1]] = [items[index - 1], items[index]];
+            openMenuEditor();
+        }
+
+        function moveMenuItemDown(categoryName, index) {
+            const items = menuStructure[categoryName];
+            if (index === items.length - 1) return;
+            
+            [items[index], items[index + 1]] = [items[index + 1], items[index]];
+            openMenuEditor();
+        }
+
+        function deleteMenuItem(categoryName, index) {
+            if (menuStructure[categoryName].length <= 1) {
+                alert('각 대메뉴에는 최소 1개의 소메뉴가 필요합니다.');
+                return;
+            }
+            
+            const menuItem = menuStructure[categoryName][index];
+            if (confirm(`정말 '${menuItem}' 소메뉴를 삭제하시겠습니까?`)) {
+                const pageIndex = pages.findIndex(p => p.menuName === menuItem);
+                if (pageIndex !== -1) {
+                    pages.splice(pageIndex, 1);
+                    if (currentPageIndex >= pages.length) {
+                        currentPageIndex = Math.max(0, pages.length - 1);
+                    }
+                }
+                
+                menuStructure[categoryName].splice(index, 1);
+                openMenuEditor();
+            }
+        }
+
+        async function addNewCategory() {
+            const input = document.getElementById('newCategoryName');
+            const categoryName = input.value.trim();
+            
+            if (!categoryName) {
+                alert('대메뉴 이름을 입력해주세요.');
+                return;
+            }
+            
+            if (menuStructure[categoryName]) {
+                alert('이미 존재하는 대메뉴 이름입니다.');
+                return;
+            }
+            
+            menuStructure[categoryName] = ['새 소메뉴'];
+            input.value = '';
+            await saveData();
+            openMenuEditor();
+        }
+
+        async function resetData() {
+            if (confirm('정말 모든 데이터를 초기화하시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없습니다.\n⚠️ Supabase와 로컬 저장소의 모든 데이터가 삭제됩니다.')) {
+                try {
+                    // Supabase 데이터 삭제 (가능한 경우)
+                    if (isSupabaseReady && supabase) {
+                        try {
+                            const { error } = await supabase
+                                .from('mokpo_projects')
+                                .delete()
+                                .neq('id', '00000000-0000-0000-0000-000000000000'); // 모든 데이터 삭제
+                            
+                            if (error) {
+                                // 삭제 실패해도 계속 진행
+                            }
+                        } catch (error) {
+                            // Supabase 삭제 실패해도 계속 진행
+                        }
+                    }
+                    
+                    // 로컬 저장소 삭제
+                    localStorage.removeItem('mokpo_library_data');
+                    
+                    // 페이지 새로고침
+                    location.reload();
+                } catch (error) {
+                    alert('데이터 초기화 중 오류가 발생했습니다: ' + error.message);
+                }
+            }
+        }
+
+        function saveMenuStructure() {
+            // 메뉴 구조 저장 후 페이지 데이터 동기화
+            saveData();
+            initializePages(); // 페이지 데이터를 새 메뉴 구조에 맞게 업데이트
+            renderMenuGrid();
+            updateAllDisplays();
+            closeMenuEditor();
+            showSaveModal('메뉴 구조가 저장되었습니다!\n페이지 데이터도 자동으로 동기화되었습니다.');
+        }
+
+        function closeMenuEditor() {
+            document.getElementById('menuEditorModal').style.display = 'none';
+        }
+
+        function updateAllDisplays() {
+            updateProgress();
+            updateMenuItemStyles();
+            updatePageSelector();
+            loadPage(currentPageIndex);
+        }
+
+        function updateMenuItemStyles() {
+            document.querySelectorAll('.menu-item').forEach(item => {
+                const menuName = item.getAttribute('data-page');
+                const page = pages.find(p => p.menuName === menuName);
+                
+                // 모든 클래스 초기화
+                item.classList.remove('page-exists', 'page-completed', 'current-page');
+                
+                if (page) {
+                    item.classList.add('page-exists');
+                    if (page.isCompleted) {
+                        item.classList.add('page-completed');
+                    }
+                    
+                    // 현재 편집 중인 페이지 강조
+                    if (currentCategory) {
+                        const currentPage = filteredPages[currentPageIndex];
+                        if (currentPage && currentPage.menuName === menuName) {
+                            item.classList.add('current-page');
+                        }
+                    } else {
+                        const currentPage = pages[currentPageIndex];
+                        if (currentPage && currentPage.menuName === menuName) {
+                            item.classList.add('current-page');
+                        }
+                    }
+                }
+            });
+        }
+
+        function updatePageSelector() {
+            const pageSelector = document.getElementById('pageSelector');
+            pageSelector.innerHTML = '';
+            
+            pages.forEach((page, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${index + 1}. ${page.title}`;
+                if (index === currentPageIndex) {
+                    option.selected = true;
+                }
+                pageSelector.appendChild(option);
+            });
+        }
+
+        function loadPage(index) {
+            if (index < 0 || index >= pages.length) return;
+            
+            const page = pages[index];
+            document.getElementById('pageTitle').textContent = page.title;
+            document.getElementById('beforeContent').value = page.beforeContent;
+            document.getElementById('afterContent').value = page.afterContent;
+            
+            loadImages(page.beforeImage, page.afterImage);
+            updateNavigationButtons();
+            updateMenuItemStyles(); // 현재 페이지 강조 업데이트
+            
+            document.getElementById('currentPageNum').textContent = index + 1;
+            document.getElementById('totalPageNum').textContent = pages.length;
+        }
+
+        function loadImages(beforeImage, afterImage) {
+            const beforeContainer = document.getElementById('beforeImageContainer');
+            const afterContainer = document.getElementById('afterImageContainer');
+            
+            if (beforeImage) {
+                beforeContainer.innerHTML = `
+                    <img src="${beforeImage}" class="uploaded-image" alt="개편 전 이미지">
+                    <div class="image-controls">
+                        <button onclick="removeBeforeImage()">×</button>
+                    </div>
+                `;
+            } else {
+                beforeContainer.innerHTML = `
+                    <div class="image-placeholder">
+                        현재 화면 이미지를 업로드하세요
+                    </div>
+                    <div class="image-controls">
+                        <button onclick="removeBeforeImage()">×</button>
+                    </div>
+                `;
+            }
+            
+            if (afterImage) {
+                afterContainer.innerHTML = `
+                    <img src="${afterImage}" class="uploaded-image" alt="개편 후 이미지">
+                    <div class="image-controls">
+                        <button onclick="removeAfterImage()">×</button>
+                    </div>
+                `;
+            } else {
+                afterContainer.innerHTML = `
+                    <div class="image-placeholder">
+                        목표 화면 이미지를 업로드하세요
+                    </div>
+                    <div class="image-controls">
+                        <button onclick="removeAfterImage()">×</button>
+                    </div>
+                `;
+            }
+        }
+
+        function updateNavigationButtons() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            prevBtn.disabled = currentPageIndex === 0;
+            nextBtn.disabled = currentPageIndex === pages.length - 1;
+        }
+
+        function updateProgress() {
+            const completedPages = pages.filter(page => page.isCompleted).length;
+            const totalPages = pages.length;
+            const progress = totalPages > 0 ? (completedPages / totalPages) * 100 : 0;
+            
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('progressText').textContent = 
+                `${Math.round(progress)}% 완료 (${completedPages}/${totalPages} 페이지)`;
+            
+            document.getElementById('totalPages').textContent = `${totalPages}개`;
+            document.getElementById('completedPages').textContent = `${completedPages}개`;
+        }
+
+        function previousPage() {
+            if (currentPageIndex > 0) {
+                savePage(false);
+                currentPageIndex--;
+                loadPage(currentPageIndex);
+            }
+        }
+
+        function nextPage() {
+            if (currentPageIndex < pages.length - 1) {
+                savePage(false);
+                currentPageIndex++;
+                loadPage(currentPageIndex);
+            }
+        }
+
+        function goToPage(index) {
+            savePage(false);
+            currentPageIndex = parseInt(index);
+            loadPage(currentPageIndex);
+        }
+
+        function loadFilteredPage(index) {
+            if (index < 0 || index >= filteredPages.length) return;
+            
+            const page = filteredPages[index];
+            document.getElementById('pageTitle').textContent = `${currentCategory} > ${page.title}`;
+            document.getElementById('beforeContent').value = page.beforeContent;
+            document.getElementById('afterContent').value = page.afterContent;
+            
+            loadImages(page.beforeImage, page.afterImage);
+            updateNavigationButtons();
+            updateMenuItemStyles(); // 현재 페이지 강조 업데이트
+            
+            document.getElementById('currentPageNum').textContent = index + 1;
+            document.getElementById('totalPageNum').textContent = filteredPages.length;
+        }
+
+        function updatePageNavigation() {
+            const categorySelector = document.getElementById('categorySelector');
+            const pageSelector = document.getElementById('pageSelector');
+            
+            // 대메뉴 선택기 업데이트
+            categorySelector.innerHTML = '<option value="">📂 대메뉴 선택</option>';
+            Object.keys(menuStructure).forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = `📂 ${category}`;
+                if (currentCategory === category) {
+                    option.selected = true;
+                }
+                categorySelector.appendChild(option);
+            });
+            
+            // 소메뉴 선택기 업데이트
+            if (currentCategory) {
+                pageSelector.disabled = false;
+                pageSelector.innerHTML = '<option value="">📄 소메뉴 선택</option>';
+                
+                filteredPages.forEach((page, index) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = `📄 ${page.title}`;
+                    if (index === currentPageIndex) {
+                        option.selected = true;
+                    }
+                    pageSelector.appendChild(option);
+                });
+            } else {
+                pageSelector.disabled = true;
+                pageSelector.innerHTML = '<option value="">📄 먼저 대메뉴를 선택하세요</option>';
+            }
+        }
+
+        function onCategoryChange(categoryName) {
+            if (categoryName) {
+                handleCategoryClick(categoryName);
+            } else {
+                // 전체 보기 모드로 전환
+                currentCategory = null;
+                filteredPages = [];
+                currentPageIndex = 0;
+                
+                if (pages.length > 0) {
+                    loadPage(0);
+                } else {
+                    document.getElementById('pageTitle').textContent = '메인 페이지';
+                    document.getElementById('beforeContent').value = '';
+                    document.getElementById('afterContent').value = '';
+                }
+                
+                updatePageNavigation();
+                renderMenuGrid();
+                showSaveModal('📂 전체 페이지 보기 모드로 전환되었습니다.');
+            }
+        }
+
+        function updateNavigationButtons() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            if (currentCategory) {
+                // 카테고리 모드
+                prevBtn.disabled = currentPageIndex === 0;
+                nextBtn.disabled = currentPageIndex === filteredPages.length - 1;
+            } else {
+                // 전체 모드
+                prevBtn.disabled = currentPageIndex === 0;
+                nextBtn.disabled = currentPageIndex === pages.length - 1;
+            }
+        }
+
+        function previousPage() {
+            if (currentCategory) {
+                // 카테고리 모드
+                if (currentPageIndex > 0) {
+                    autoSavePage(); // 자동 저장
+                    currentPageIndex--;
+                    loadFilteredPage(currentPageIndex);
+                }
+            } else {
+                // 전체 모드
+                if (currentPageIndex > 0) {
+                    autoSavePage(); // 자동 저장
+                    currentPageIndex--;
+                    loadPage(currentPageIndex);
+                }
+            }
+        }
+
+        function nextPage() {
+            if (currentCategory) {
+                // 카테고리 모드
+                if (currentPageIndex < filteredPages.length - 1) {
+                    autoSavePage(); // 자동 저장
+                    currentPageIndex++;
+                    loadFilteredPage(currentPageIndex);
+                }
+            } else {
+                // 전체 모드
+                if (currentPageIndex < pages.length - 1) {
+                    autoSavePage(); // 자동 저장
+                    currentPageIndex++;
+                    loadPage(currentPageIndex);
+                }
+            }
+        }
+
+        function goToPage(index) {
+            if (currentCategory) {
+                // 카테고리 모드
+                autoSavePage(); // 자동 저장
+                currentPageIndex = parseInt(index);
+                loadFilteredPage(currentPageIndex);
+            } else {
+                // 전체 모드
+                autoSavePage(); // 자동 저장
+                currentPageIndex = parseInt(index);
+                loadPage(currentPageIndex);
+            }
+        }
+
+        function saveCurrentPage(showModal = true) {
+            if (currentUserType !== 'admin') return;
+            
+            let currentPage;
+            if (currentCategory) {
+                currentPage = filteredPages[currentPageIndex];
+            } else {
+                currentPage = pages[currentPageIndex];
+            }
+            
+            if (!currentPage) {
+                return;
+            }
+            
+            // 텍스트 내용 저장
+            const beforeContent = document.getElementById('beforeContent').value;
+            const afterContent = document.getElementById('afterContent').value;
+            
+            currentPage.beforeContent = beforeContent;
+            currentPage.afterContent = afterContent;
+            
+            // 완료 상태 업데이트
+            const isCompleted = updatePageCompletionStatus(currentPage);
+            
+            // 데이터 저장
+            saveData();
+            
+            if (showModal) {
+                const statusText = isCompleted ? '✅ 완료됨' : '⏳ 진행 중';
+                showSaveModal(`💾 '${currentPage.title}' 페이지가 저장되었습니다!\n\n상태: ${statusText}`);
+            }
+        }
+
+        // 페이지 전환 시 자동 저장
+        function autoSavePage() {
+            if (currentUserType === 'admin') {
+                console.log('Auto-saving current page...');
+                saveCurrentPage(false);
+            }
+        }
+
+        function savePage(showModal = true) {
+            // 카테고리 모드에서는 saveCurrentPage 사용
+            if (currentCategory) {
+                saveCurrentPage(showModal);
+                return;
+            }
+            
+            if (currentUserType !== 'admin') return;
+            
+            const currentPage = pages[currentPageIndex];
+            currentPage.beforeContent = document.getElementById('beforeContent').value;
+            currentPage.afterContent = document.getElementById('afterContent').value;
+            
+            const beforeCompleted = currentPage.beforeContent.trim() !== '' || currentPage.beforeImage;
+            const afterCompleted = currentPage.afterContent.trim() !== '' || currentPage.afterImage;
+            
+            currentPage.isCompleted = beforeCompleted && afterCompleted;
+            
+            updateProgress();
+            updateMenuItemStyles();
+            saveData();
+            
+            if (showModal) {
+                showSaveModal(`'${currentPage.title}' 페이지가 저장되었습니다!`);
+            }
+        }
+
+        function saveWorkNotes() {
+            if (currentUserType !== 'admin') return;
+            
+            workNotes = document.getElementById('workNotes').value;
+            saveData();
+            showSaveModal('업무 지시사항 및 메모가 저장되었습니다!');
+        }
+
+        function uploadBeforeImage() {
+            if (currentUserType !== 'admin') return;
+            
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        // 현재 페이지 찾기
+                        let currentPage;
+                        if (currentCategory) {
+                            currentPage = filteredPages[currentPageIndex];
+                        } else {
+                            currentPage = pages[currentPageIndex];
+                        }
+                        
+                        if (currentPage) {
+                            // 이미지 데이터 저장
+                            currentPage.beforeImage = e.target.result;
+                            
+                            // 이미지 표시 업데이트
+                            loadImages(currentPage.beforeImage, currentPage.afterImage);
+                            
+                            // 즉시 데이터 저장
+                            saveData();
+                            
+                            // 완료 상태 업데이트
+                            updatePageCompletionStatus(currentPage);
+                            
+                            showSaveModal(`✅ '${currentPage.title}' 페이지의 개편 전 이미지가 저장되었습니다!`);
+                        } else {
+                            alert('현재 페이지를 찾을 수 없습니다.');
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            input.click();
+        }
+
+        function uploadAfterImage() {
+            if (currentUserType !== 'admin') return;
+            
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        // 현재 페이지 찾기
+                        let currentPage;
+                        if (currentCategory) {
+                            currentPage = filteredPages[currentPageIndex];
+                        } else {
+                            currentPage = pages[currentPageIndex];
+                        }
+                        
+                        if (currentPage) {
+                            // 이미지 데이터 저장
+                            currentPage.afterImage = e.target.result;
+                            
+                            // 이미지 표시 업데이트
+                            loadImages(currentPage.beforeImage, currentPage.afterImage);
+                            
+                            // 즉시 데이터 저장
+                            saveData();
+                            
+                            // 완료 상태 업데이트
+                            updatePageCompletionStatus(currentPage);
+                            
+                            showSaveModal(`✅ '${currentPage.title}' 페이지의 개편 후 이미지가 저장되었습니다!`);
+                        } else {
+                            alert('현재 페이지를 찾을 수 없습니다.');
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            input.click();
+        }
+
+        function updatePageCompletionStatus(page) {
+            const beforeCompleted = page.beforeContent.trim() !== '' || page.beforeImage;
+            const afterCompleted = page.afterContent.trim() !== '' || page.afterImage;
+            
+            const wasCompleted = page.isCompleted;
+            page.isCompleted = beforeCompleted && afterCompleted;
+            
+            // UI 업데이트
+            updateProgress();
+            updateMenuItemStyles();
+            
+            return page.isCompleted;
+        }
+
+        function removeBeforeImage() {
+            if (currentUserType !== 'admin') return;
+            
+            // 현재 페이지 찾기
+            let currentPage;
+            if (currentCategory) {
+                currentPage = filteredPages[currentPageIndex];
+            } else {
+                currentPage = pages[currentPageIndex];
+            }
+            
+            if (currentPage) {
+                currentPage.beforeImage = null;
+                loadImages(currentPage.beforeImage, currentPage.afterImage);
+                saveData();
+                updatePageCompletionStatus(currentPage);
+                showSaveModal(`'${currentPage.title}' 페이지의 개편 전 이미지가 삭제되었습니다.`);
+            }
+        }
+
+        function removeAfterImage() {
+            if (currentUserType !== 'admin') return;
+            
+            // 현재 페이지 찾기
+            let currentPage;
+            if (currentCategory) {
+                currentPage = filteredPages[currentPageIndex];
+            } else {
+                currentPage = pages[currentPageIndex];
+            }
+            
+            if (currentPage) {
+                currentPage.afterImage = null;
+                loadImages(currentPage.beforeImage, currentPage.afterImage);
+                saveData();
+                updatePageCompletionStatus(currentPage);
+                showSaveModal(`'${currentPage.title}' 페이지의 개편 후 이미지가 삭제되었습니다.`);
+            }
+        }
+
+        function addNewPage() {
+            if (currentUserType !== 'admin') return;
+            
+            const title = prompt('새 페이지 제목을 입력하세요:');
+            if (!title || !title.trim()) return;
+            
+            const newPage = {
+                title: title.trim(),
+                category: "service",
+                beforeContent: '',
+                afterContent: '',
+                beforeImage: null,
+                afterImage: null,
+                isCompleted: false,
+                menuName: title.trim()
+            };
+            
+            pages.push(newPage);
+            updateAllDisplays();
+            saveData();
+            
+            currentPageIndex = pages.length - 1;
+            loadPage(currentPageIndex);
+            
+            showSaveModal(`'${title}' 페이지가 추가되었습니다!`);
+        }
+
+        function deleteCurrentPage() {
+            if (currentUserType !== 'admin') return;
+            
+            if (pages.length <= 1) {
+                alert('최소 1개의 페이지는 필요합니다.');
+                return;
+            }
+            
+            const pageTitle = pages[currentPageIndex].title;
+            
+            if (confirm(`정말 '${pageTitle}' 페이지를 삭제하시겠습니까?`)) {
+                pages.splice(currentPageIndex, 1);
+                
+                if (currentPageIndex >= pages.length) {
+                    currentPageIndex = pages.length - 1;
+                }
+                
+                updateAllDisplays();
+                saveData();
+                
+                showSaveModal(`'${pageTitle}' 페이지가 삭제되었습니다.`);
+            }
+        }
+
+        async function downloadBackup() {
+            try {
+                // Supabase와 localStorage 모든 데이터를 포함한 백업 생성
+                const localData = {
+                    pages: pages,
+                    workNotes: workNotes,
+                    menuStructure: menuStructure,
+                    exportDate: new Date().toISOString(),
+                    projectName: '목포시 통합도서관 홈페이지 개편',
+                    version: '1.0',
+                    totalPages: pages.length,
+                    completedPages: pages.filter(p => p.isCompleted).length,
+                    dataSource: 'hybrid',
+                    supabaseEnabled: isSupabaseReady
+                };
+
+                // Supabase에서 최신 데이터도 가져오기 (가능한 경우)
+                if (isSupabaseReady && supabase) {
+                    try {
+                        const { data: supabaseData, error } = await supabase
+                            .from('mokpo_projects')
+                            .select('*')
+                            .order('updated_at', { ascending: false })
+                            .limit(1);
+
+                        if (!error && supabaseData && supabaseData.length > 0) {
+                            localData.supabaseData = supabaseData[0];
+                            localData.supabaseLastUpdated = supabaseData[0].updated_at;
+                        }
+                    } catch (error) {
+                        // Supabase 데이터 가져오기 실패 시 로컬 데이터만 사용
+                    }
+                }
+                
+                const jsonString = JSON.stringify(localData, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                
+                const url = URL.createObjectURL(blob);
+                const fileName = `목포시도서관_개편현황_${new Date().toISOString().split('T')[0]}.json`;
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                a.style.display = 'none';
+                
+                // DOM에 추가하고 클릭
+                document.body.appendChild(a);
+                
+                // 클릭 이벤트 강제 실행
+                a.click();
+                
+                // 정리
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 100);
+                
+                // 성공 메시지 표시
+                const message = `✅ 백업 파일이 다운로드되었습니다!
+
+📁 파일명: ${fileName}
+📊 총 페이지: ${localData.totalPages}개
+✅ 완료된 페이지: ${localData.completedPages}개
+📅 백업 날짜: ${new Date().toLocaleDateString('ko-KR')}
+${isSupabaseReady ? '☁️ Supabase 데이터 포함' : '💾 로컬 데이터만 포함'}
+
+💡 파일이 다운로드되지 않았다면 브라우저의 다운로드 차단을 확인해주세요.`;
+                
+                showSaveModal(message);
+                
+            } catch (error) {
+                // 에러 발생 시 대안 제공
+                showBackupDataModal();
+            }
+        }
+
+        function showBackupDataModal() {
+            // 기존 모달 제거
+            const existingModal = document.getElementById('backupDataModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            const data = {
+                pages: pages,
+                workNotes: workNotes,
+                menuStructure: menuStructure,
+                exportDate: new Date().toISOString(),
+                projectName: '목포시 통합도서관 홈페이지 개편',
+                version: '1.0'
+            };
+            
+            const jsonString = JSON.stringify(data, null, 2);
+            
+            // 백업 데이터 표시 모달 생성
+            const modal = document.createElement('div');
+            modal.id = 'backupDataModal';
+            modal.className = 'modal';
+            modal.style.display = 'block';
+            modal.style.zIndex = '9999';
+            
+            modal.innerHTML = `
+                <div class="modal-content large">
+                    <div class="modal-title" style="color: #28a745; margin-bottom: 20px; text-align: center;">
+                        💾 백업 데이터
+                    </div>
+                    <div style="margin-bottom: 20px; text-align: center; color: #666;">
+                        <p>파일 다운로드가 지원되지 않는 환경입니다.</p>
+                        <p>아래 데이터를 복사하여 텍스트 파일로 저장해주세요.</p>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 10px; font-weight: 600;">
+                            📄 파일명: 목포시도서관_개편현황_${new Date().toISOString().split('T')[0]}.json
+                        </label>
+                        <textarea readonly style="width: 100%; height: 400px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-family: monospace; font-size: 12px; background: #f8f9fa;">${jsonString}</textarea>
+                    </div>
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <button class="btn btn-primary" onclick="copyBackupData()" style="margin-right: 10px;">
+                            📋 데이터 복사
+                        </button>
+                        <button class="btn btn-secondary" onclick="closeBackupDataModal()">
+                            ✖️ 닫기
+                        </button>
+                    </div>
+                    <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107;">
+                        <h4 style="color: #856404; margin-bottom: 10px;">💡 사용 방법</h4>
+                        <p style="margin: 5px 0; font-size: 14px; color: #856404;">
+                            1. "데이터 복사" 버튼을 클릭하여 백업 데이터를 클립보드에 복사<br>
+                            2. 텍스트 에디터(메모장 등)를 열고 Ctrl+V로 붙여넣기<br>
+                            3. 파일을 .json 확장자로 저장<br>
+                            4. 나중에 "백업 업로드" 기능으로 복원 가능
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // 전역 함수로 등록
+            window.copyBackupData = () => {
+                const textarea = modal.querySelector('textarea');
+                textarea.select();
+                textarea.setSelectionRange(0, 99999); // 모바일 지원
+                
+                try {
+                    const successful = document.execCommand('copy');
+                    if (successful) {
+                        showSaveModal('✅ 백업 데이터가 클립보드에 복사되었습니다!\n\n이제 텍스트 에디터에 붙여넣고 .json 파일로 저장하세요.');
+                    } else {
+                        throw new Error('복사 실패');
+                    }
+                } catch (err) {
+                    // 수동 복사 안내
+                    textarea.focus();
+                    showSaveModal('📋 Ctrl+A로 전체 선택 후 Ctrl+C로 복사해주세요.\n\n그 다음 텍스트 에디터에 붙여넣고 .json 파일로 저장하세요.');
+                }
+            };
+            
+            window.closeBackupDataModal = () => {
+                modal.remove();
+            };
+            
+            // 모달 외부 클릭 시 닫기
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+
+        async function uploadBackup() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = async function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = async function(e) {
+                        try {
+                            const data = JSON.parse(e.target.result);
+                            
+                            // 백업 파일 데이터 복원
+                            if (data.pages) pages = data.pages;
+                            if (data.workNotes) {
+                                workNotes = data.workNotes;
+                                document.getElementById('workNotes').value = workNotes;
+                            }
+                            if (data.menuStructure) menuStructure = data.menuStructure;
+                            
+                            // UI 업데이트
+                            updateAllDisplays();
+                            renderMenuGrid();
+                            
+                            // 데이터 저장 (Supabase + localStorage)
+                            await saveData();
+                            
+                            // 성공 메시지
+                            const isHybridBackup = data.dataSource === 'hybrid';
+                            const hasSupabaseData = data.supabaseData !== undefined;
+                            
+                            let message = '✅ 백업 파일을 성공적으로 불러왔습니다!\n\n';
+                            message += `📊 복원된 페이지: ${data.totalPages || pages.length}개\n`;
+                            message += `✅ 완료된 페이지: ${data.completedPages || pages.filter(p => p.isCompleted).length}개\n`;
+                            
+                            if (isHybridBackup) {
+                                message += hasSupabaseData ? 
+                                    '☁️ Supabase 데이터가 포함된 백업입니다.\n' : 
+                                    '💾 로컬 데이터 백업입니다.\n';
+                            }
+                            
+                            if (isSupabaseReady) {
+                                message += '☁️ 데이터가 클라우드에 저장되었습니다.';
+                            } else {
+                                message += '💾 데이터가 로컬에 저장되었습니다.';
+                            }
+                            
+                            showSaveModal(message);
+                            
+                        } catch (error) {
+                            alert('올바르지 않은 백업 파일입니다.\n\n파일 형식을 확인해주세요.');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            input.click();
+        }
+
+        function resetData() {
+            if (confirm('정말 모든 데이터를 초기화하시겠습니까?')) {
+                localStorage.removeItem('mokpo_library_data');
+                location.reload();
+            }
+        }
+
+        function showSaveModal(message) {
+            document.getElementById('saveMessage').textContent = message;
+            document.getElementById('saveModal').style.display = 'block';
+        }
+
+        function closeSaveModal() {
+            document.getElementById('saveModal').style.display = 'none';
+        }
+
+        // 이벤트 리스너
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Supabase 초기화
+            initializeSupabase();
+            
+            // 초기 접속자 수 업데이트
+            setTimeout(updateOnlineUsersCount, 1000);
+            
+            // 주기적으로 접속자 수 업데이트 (1분마다)
+            setInterval(updateOnlineUsersCount, 60000);
+            
+            // 자동 로그인 체크 (새로고침 시 로그인 상태 복원)
+            const autoLoginSuccess = await checkAutoLogin();
+            
+            // 자동 로그인이 실패한 경우에만 로그인 화면 표시
+            if (!autoLoginSuccess) {
+                document.getElementById('loginScreen').style.display = 'flex';
+                document.getElementById('mainContent').style.display = 'none';
+            }
+            
+            document.getElementById('loginInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    attemptLogin();
+                }
+            });
+            
+            window.addEventListener('click', function(event) {
+                const saveModal = document.getElementById('saveModal');
+                const menuModal = document.getElementById('menuEditorModal');
+                if (event.target === saveModal) {
+                    closeSaveModal();
+                }
+                if (event.target === menuModal) {
+                    closeMenuEditor();
+                }
+            });
+            
+            // 자동 저장 (30초마다)
+            setInterval(async () => {
+                if (currentUserType === 'admin') {
+                    try {
+                        await savePage(false);
+                    } catch (error) {
+                        // 자동 저장 실패 시 무시
+                    }
+                }
+            }, 30000);
+            
+            // 페이지 종료 전 저장 및 세션 정리
+            window.addEventListener('beforeunload', async function(e) {
+                // 세션 종료
+                if (currentSessionId) {
+                    await endUserSession();
+                }
+                
+                // 데이터 저장
+                if (currentUserType === 'admin') {
+                    try {
+                        await savePage(false);
+                    } catch (error) {
+                        // 저장 실패 시 무시
+                    }
+                }
+            });
+            
+            // 페이지 숨김/표시 이벤트 처리 (탭 전환 등)
+            document.addEventListener('visibilitychange', function() {
+                if (document.visibilityState === 'visible' && currentSessionId) {
+                    // 페이지가 다시 보일 때 하트비트 재시작
+                    startHeartbeat();
+                    updateOnlineUsersCount();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
